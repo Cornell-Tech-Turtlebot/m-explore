@@ -41,6 +41,7 @@
 #include <mutex>
 #include <string>
 #include <vector>
+#include <thread>
 
 #include <actionlib/client/simple_action_client.h>
 #include <geometry_msgs/PoseStamped.h>
@@ -68,6 +69,13 @@ public:
   void stop();
 
 private:
+
+  // Initialize variables to determine if frontier finding needs to be cancelled.
+  std::chrono::system_clock::time_point start_time;
+  std::chrono::system_clock::time_point end_time;
+  std::chrono::duration<double> elapsed;
+  double exploration_time_limit;
+
   /**
    * @brief  Make a global plan
    */

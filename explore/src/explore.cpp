@@ -38,6 +38,8 @@
 #include <explore/explore.h>
 
 #include <thread>
+#include <std_msgs/String.h>
+#include <sstream>
 
 inline static bool operator==(const geometry_msgs::Point& one,
                               const geometry_msgs::Point& two)
@@ -58,6 +60,12 @@ Explore::Explore()
   , prev_distance_(0)
   , last_markers_count_(0)
 {
+
+  // Initialize variables that ends exploration after a time limit
+  // Default limit is 600 seconds, but can be overwritten in the explore.launch file 
+  start_time = std::chrono::system_clock::now(); 
+  private_nh_.param("exploration_time_limit", exploration_time_limit, 600.0);
+
   double timeout;
   double min_frontier_size;
   private_nh_.param("planner_frequency", planner_frequency_, 1.0);
@@ -185,6 +193,38 @@ void Explore::makePlan()
   ROS_DEBUG("found %lu frontiers", frontiers.size());
   for (size_t i = 0; i < frontiers.size(); ++i) {
     ROS_DEBUG("frontier %zd cost: %f", i, frontiers[i].cost);
+  }
+
+  // Stop the frontier finder if its been exploring more than the time limit.
+  end_time = std::chrono::system_clock::now();
+  elapsed = end_time - start_time; 
+  if (exploration_time_limit < elapsed.count()) {
+    ROS_DEBUG("exiting: elapsed %f > exploration_time_limit %f", elapsed, exploration_time_limit);
+
+    // Publish when exploration has completed.
+    ros::NodeHandle n;
+    ros::Publisher completion_pub = n.advertise<std_msgs::String>("completion", 100);
+    std::stringstream ss;
+    ss << "exploring";
+    std_msgs::String msg;
+    msg.data = ss.str(); 
+
+    // Publish for 10 seconds
+    ros::Time beginPause = ros::Time::now();
+    ros::Time endPause = beginPause + ros::Duration(10);
+    while (ros::Time::now() < endPause) {
+      completion_pub.publish(msg); 
+      ros::Duration(0.1).sleep();
+    }
+
+    // Shutdown (but wait 10 seconds for message to be received)
+    //ros::Duration(10).sleep();
+
+    // Shutdown
+    ros::shutdown();
+
+    stop();
+    return;
   }
 
   if (frontiers.empty()) {
