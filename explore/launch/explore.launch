@@ -1,4 +1,8 @@
 <launch>
+
+  <!-- Arg is passed in from orch_pkg -->
+  <arg name="exploration_time_limit" default="60.0"/>
+
 <node pkg="explore_lite" type="explore" respawn="false" name="explore" output="screen">
   <param name="robot_base_frame" value="base_link"/>
   <param name="costmap_topic" value="map"/>
@@ -13,7 +17,7 @@
   <param name="min_frontier_size" value="0.75"/>
   
   <!-- THIS IS OUR PARAMETER -->
-  <param name="exploration_time_limit" value="5.0"/>
+  <param name="exploration_time_limit" value="$(arg exploration_time_limit)"/>
 
 </node>
 </launch>

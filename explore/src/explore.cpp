@@ -203,9 +203,9 @@ void Explore::makePlan()
 
     // Publish when exploration has completed.
     ros::NodeHandle n;
-    ros::Publisher completion_pub = n.advertise<std_msgs::String>("completion", 100);
+    ros::Publisher completion_pub = n.advertise<std_msgs::String>("exploring_completed", 100);
     std::stringstream ss;
-    ss << "exploring";
+    ss << "completed";
     std_msgs::String msg;
     msg.data = ss.str(); 
 
